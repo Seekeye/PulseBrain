@@ -1,32 +1,30 @@
-#!/usr/bin/env python3
-"""
-Ultra Simple Health Check for Railway
-Solo responde a /health
-"""
-
 import os
-import json
-from datetime import datetime
-from http.server import HTTPServer, BaseHTTPRequestHandler
+import socket
 
-class HealthHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        if self.path == '/health':
-            response = {"status": "ok", "timestamp": datetime.utcnow().isoformat()}
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            self.wfile.write(json.dumps(response).encode())
-        else:
-            self.send_response(404)
-            self.end_headers()
+def start_server():
+    port = int(os.environ.get('PORT', 8000))
+    print(f"Starting health check on port {port}")
     
-    def log_message(self, format, *args):
-        pass
+    # Create socket
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(('', port))
+    sock.listen(1)
+    
+    while True:
+        conn, addr = sock.accept()
+        try:
+            data = conn.recv(1024).decode()
+            if '/health' in data:
+                response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nOK"
+                conn.send(response.encode())
+            else:
+                response = "HTTP/1.1 404 Not Found\r\n\r\n"
+                conn.send(response.encode())
+        except:
+            pass
+        finally:
+            conn.close()
 
 if __name__ == "__main__":
-    port = int(os.environ.get('PORT', 8000))
-    print(f"🏥 Starting health check on port {port}")
-    
-    server = HTTPServer(('', port), HealthHandler)
-    server.serve_forever()
+    start_server()
