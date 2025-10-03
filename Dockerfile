@@ -30,4 +30,3 @@ EXPOSE 8000
 # Start command
 WORKDIR /app/backend
 CMD ["python", "continuous_bot_enhanced.py"]
-
