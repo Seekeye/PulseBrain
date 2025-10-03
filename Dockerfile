@@ -28,4 +28,6 @@ ENV PYTHONUNBUFFERED=1
 EXPOSE 8000
 
 # Start command
-CMD ["python", "backend/continuous_bot_enhanced.py"]
+WORKDIR /app/backend
+CMD ["python", "continuous_bot_enhanced.py"]
+
