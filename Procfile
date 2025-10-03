@@ -1,1 +1,2 @@
-web: python backend/continuous_bot_enhanced.py
+web: python railway_bot.py
+
