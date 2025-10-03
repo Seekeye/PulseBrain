@@ -1,2 +1,2 @@
-web: python railway_bot.py
+web: python health.py
 
