@@ -1,53 +1,31 @@
-#!/usr/bin/env python3
 """
-Ultra Simple App for Railway
-Solo health check + bot básico
+Ultra Simple Health Check for Railway
+Solo responde a /health sin dependencias
 """
 
 import os
-import sys
 import json
 from datetime import datetime
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
-# Agregar backend al path
-sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
-
-def health_check():
-    """Health check simple"""
-    return {
-        "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat(),
-        "service": "CryptoPulse Pro Bot",
-        "version": "1.0.0"
-    }
-
-def main():
-    """Función principal"""
-    print("🚀 Starting CryptoPulse Pro Bot...")
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/health':
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            response = {"status": "ok", "timestamp": datetime.utcnow().isoformat()}
+            self.wfile.write(json.dumps(response).encode())
+        else:
+            self.send_response(404)
+            self.end_headers()
     
-    # Verificar que estamos en Railway
-    port = os.environ.get('PORT', 8000)
-    print(f"🌐 Running on port {port}")
-    
-    # Importar y ejecutar bot
-    try:
-        from continuous_bot_enhanced import EnhancedContinuousBot
-        import asyncio
-        
-        async def run_bot():
-            bot = EnhancedContinuousBot()
-            await bot.initialize()
-            await bot.run()
-        
-        # Ejecutar bot
-        asyncio.run(run_bot())
-        
-    except Exception as e:
-        print(f"❌ Error starting bot: {e}")
-        # Mantener el proceso vivo para health check
-        import time
-        while True:
-            time.sleep(60)
+    def log_message(self, format, *args):
+        pass
 
 if __name__ == "__main__":
-    main()
+    port = int(os.environ.get('PORT', 8000))
+    print(f"Starting health check on port {port}")
+    
+    server = HTTPServer(('', port), HealthHandler)
+    server.serve_forever()
