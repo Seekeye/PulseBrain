@@ -1,1 +1,2 @@
-web: python flask_health.py
+web: python simple.py
+
