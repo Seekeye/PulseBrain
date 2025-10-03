@@ -29,6 +29,12 @@ colorama>=0.4.6,<1.0.0
 
 # Production
 gunicorn>=21.2.0,<22.0.0
+flask>=2.3.0,<3.0.0
+
+# Additional dependencies for Railway
+setuptools>=68.0.0
+wheel>=0.41.0
+
 
 # Additional dependencies for Railway
 setuptools>=68.0.0
