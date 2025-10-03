@@ -1,1 +1,1 @@
-web: cd backend && python continuous_bot_enhanced.py
+web: python backend/continuous_bot_enhanced.py
