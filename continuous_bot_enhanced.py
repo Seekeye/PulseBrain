@@ -12,6 +12,9 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Any
 import signal
 import json
+import threading
+import http.server
+import socketserver
 
 # Agregar el directorio backend al path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -25,6 +28,26 @@ from core.portfolio_manager import PortfolioManager
 from notifications.telegram_bot import TelegramBot
 from database.signals_feedback_db import SignalsFeedbackDB
 from config.settings import Settings
+
+class HealthCheckHandler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/health':
+            health_data = {
+                "status": "healthy",
+                "timestamp": datetime.utcnow().isoformat(),
+                "service": "CryptoPulse Pro Bot",
+                "version": "1.0.0"
+            }
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps(health_data).encode())
+        else:
+            self.send_response(404)
+            self.end_headers()
+    
+    def log_message(self, format, *args):
+        pass
 
 class EnhancedContinuousBot:
     """Bot continuo mejorado con ML adaptativo y retroalimentación"""
@@ -58,6 +81,21 @@ class EnhancedContinuousBot:
             'performance_summary_interval': 10,  # Cada 10 ciclos
             'detailed_analysis_interval': 50  # Cada 50 ciclos
         }
+        
+        # Health check server
+        self.health_server = None
+        self.health_thread = None
+    
+    def start_health_check(self):
+        """Iniciar servidor de health check en puerto 8000"""
+        try:
+            port = int(os.environ.get('PORT', 8000))
+            self.health_server = socketserver.TCPServer(("", port), HealthCheckHandler)
+            self.health_thread = threading.Thread(target=self.health_server.serve_forever, daemon=True)
+            self.health_thread.start()
+            self.logger.info(f"🏥 Health check server started on port {port}")
+        except Exception as e:
+            self.logger.error(f"❌ Failed to start health check server: {e}")
         
     async def initialize(self):
         """Inicializar todos los componentes"""
@@ -642,6 +680,9 @@ class EnhancedContinuousBot:
             self.logger.info("🚀 Starting Enhanced Continuous Bot...")
             self.running = True
             
+            # Iniciar health check server
+            self.start_health_check()
+            
             # Configurar manejador de señales para shutdown graceful
             def signal_handler(signum, frame):
                 self.logger.info("🛑 Shutdown signal received...")
@@ -711,6 +752,11 @@ async def main():
         print("❌ Failed to initialize enhanced bot!")
         return False
     
+    return True
+
+if __name__ == "__main__":
+    asyncio.run(main())
+
     return True
 
 if __name__ == "__main__":
