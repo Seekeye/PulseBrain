@@ -1,43 +1,50 @@
 #!/usr/bin/env python3
 """
 Main entry point for Railway
-Starts health check server + bot
+Ultra simple health check that works
 """
 
 import os
-import sys
+import socket
 import threading
 import time
-from http.server import HTTPServer, BaseHTTPRequestHandler
 
-class HealthHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        if self.path == '/health':
-            self.send_response(200)
-            self.send_header('Content-type', 'text/plain')
-            self.end_headers()
-            self.wfile.write(b'OK')
-        else:
-            self.send_response(404)
-            self.end_headers()
-    
-    def log_message(self, format, *args):
-        pass
-
-def start_health_server():
+def health_check_server():
     """Start health check server"""
-    try:
-        port = int(os.environ.get('PORT', 8000))
-        server = HTTPServer(('', port), HealthHandler)
-        print(f"🏥 Health check server started on port {port}")
-        server.serve_forever()
-    except Exception as e:
-        print(f"❌ Health server error: {e}")
+    port = int(os.environ.get('PORT', 8000))
+    print(f"🏥 Starting health check on port {port}")
+    
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(('', port))
+    sock.listen(1)
+    
+    print(f"✅ Health check server ready on port {port}")
+    
+    while True:
+        try:
+            conn, addr = sock.accept()
+            data = conn.recv(1024).decode()
+            
+            if '/health' in data:
+                response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nOK"
+                conn.send(response.encode())
+                print(f"✅ Health check responded to {addr}")
+            else:
+                response = "HTTP/1.1 404 Not Found\r\n\r\n"
+                conn.send(response.encode())
+            
+            conn.close()
+        except Exception as e:
+            print(f"❌ Health check error: {e}")
 
 def start_bot():
-    """Start main bot"""
+    """Start main bot in background"""
     try:
-        print("🤖 Starting bot...")
+        print("🤖 Starting bot in background...")
+        import sys
+        sys.path.append('backend')
+        
         from continuous_bot_enhanced import EnhancedContinuousBot
         import asyncio
         
@@ -51,15 +58,21 @@ def start_bot():
         print(f"❌ Bot error: {e}")
 
 def main():
-    print("🚀 Starting CryptoPulse Pro Bot with Health Check...")
+    print("🚀 Starting CryptoPulse Pro Bot...")
     
     # Start bot in background thread
     bot_thread = threading.Thread(target=start_bot, daemon=True)
     bot_thread.start()
     
-    # Wait a bit for bot to initialize
-    time.sleep(2)
+    # Wait for bot to initialize
+    time.sleep(3)
     
+    # Start health check server (this will block)
+    health_check_server()
+
+if __name__ == "__main__":
+    main()
+
     # Start health check server (this will block)
     start_health_server()
 
