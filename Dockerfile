@@ -1,14 +1,14 @@
 # CryptoPulse Pro - Railway Dockerfile
 FROM python:3.11-slim
 
-# Set working directory
-WORKDIR /app
-
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
 
 # Copy requirements first for better caching
 COPY requirements.txt .
@@ -24,9 +24,8 @@ COPY . .
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
-# Expose port (Railway will set PORT automatically)
+# Expose port
 EXPOSE 8000
 
-# Start command
-WORKDIR /app/backend
-CMD ["python", "continuous_bot_enhanced.py"]
+# Start command - use absolute path
+CMD ["python", "/app/backend/continuous_bot_enhanced.py"]
