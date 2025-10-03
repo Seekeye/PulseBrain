@@ -8,4 +8,4 @@ cmds = ["python -m venv --copies /opt/venv && . /opt/venv/bin/activate && pip in
 cmds = ["echo 'Build completed'"]
 
 [start]
-cmd = "cd backend && python main.py"
+cmd = "python health.py"
